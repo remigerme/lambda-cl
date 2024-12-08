@@ -102,6 +102,9 @@ let rec pcl_to_cl t =
       let v = abs x u in
       pcl_to_cl v
 
+(************)
+(* B-AXIOMS *)
+(************)
 let baxiom11 =
   Abs
     ( "x",
@@ -114,8 +117,21 @@ let baxiom11 =
           PVar "Z" ) )
 
 let baxiom12 = Abs ("x", papps [ PComb C; PVar "x"; PVar "V"; PVar "Z" ])
-let () = print_to_latex (pcl_to_cl baxiom11)
-let () = print_to_latex (pcl_to_cl baxiom12)
+
+let baxiom21 =
+  Abs
+    ( "x",
+      PApp
+        ( PApp
+            ( PComb C,
+              PApp (PApp (PComb B, papps [ PComb B; PVar "U" ]), PVar "x") ),
+          PVar "Z" ) )
+
+let baxiom22 =
+  Abs
+    ( "x",
+      PApp (papps [ PComb B; PVar "U" ], papps [ PComb C; PVar "x"; PVar "Z" ])
+    )
 
 let baxiom31 =
   Abs
@@ -127,5 +143,9 @@ let baxiom32 =
       PApp (PApp (PComb B, PVar "U"), PApp (PApp (PComb B, PVar "V"), PVar "x"))
     )
 
+let () = print_to_latex (pcl_to_cl baxiom11)
+let () = print_to_latex (pcl_to_cl baxiom12)
+let () = print_to_latex (pcl_to_cl baxiom21)
+let () = print_to_latex (pcl_to_cl baxiom22)
 let () = print_to_latex (pcl_to_cl baxiom31)
 let () = print_to_latex (pcl_to_cl baxiom32)

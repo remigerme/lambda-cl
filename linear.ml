@@ -15,11 +15,27 @@ type cl = Var of var | Comb of comb | App of cl * cl
 type pcl = PVar of var | PComb of comb | PApp of pcl * pcl | Abs of var * pcl
 
 (** Naive string repr of a CL term, there might be useless parentheses *)
-let rec cl_to_string t =
+let rec cl_to_string_naive t =
   match t with
   | Var x -> x
   | Comb c -> ( match c with I -> "I" | B -> "B" | C -> "C")
-  | App (u, v) -> "(" ^ cl_to_string u ^ cl_to_string v ^ ")"
+  | App (u, v) -> "(" ^ cl_to_string_naive u ^ cl_to_string_naive v ^ ")"
+
+(** String repr of a CL term without meaningless parentheses *)
+let cl_to_string t =
+  let rec aux t =
+    match t with
+    | Var x -> (x, true)
+    | Comb c ->
+        let s = match c with I -> "I" | B -> "B" | C -> "C" in
+        (s, true)
+    | App (u, v) ->
+        let su, _ = aux u in
+        let sv, rv = aux v in
+        let fsv = if rv then sv else "(" ^ sv ^ ")" in
+        (su ^ fsv, false)
+  in
+  fst (aux t)
 
 let rec pcl_to_string t =
   match t with
@@ -39,6 +55,8 @@ let latexify s =
       | _ -> Buffer.add_char buf c)
     s;
   Buffer.contents buf
+
+let print_to_latex t = print_endline (latexify (cl_to_string t))
 
 exception EmptyApps
 
@@ -91,22 +109,23 @@ let baxiom11 =
         ( PApp
             ( PComb C,
               PApp
-                (PApp (PComb C, papps [ PComb B; PComb B; PVar "x" ]), PVar "v")
+                (PApp (PComb C, papps [ PComb B; PComb B; PVar "x" ]), PVar "V")
             ),
-          PVar "z" ) )
+          PVar "Z" ) )
 
-let baxiom12 = Abs ("x", papps [ PComb C; PVar "x"; PVar "v"; PVar "z" ])
-let () = print_endline (cl_to_string (pcl_to_cl baxiom11))
-let () = print_endline (cl_to_string (pcl_to_cl baxiom12))
+let baxiom12 = Abs ("x", papps [ PComb C; PVar "x"; PVar "V"; PVar "Z" ])
+let () = print_to_latex (pcl_to_cl baxiom11)
+let () = print_to_latex (pcl_to_cl baxiom12)
 
 let baxiom31 =
   Abs
-    ("x", PApp (PApp (PComb B, papps [ PComb B; PVar "u"; PVar "v" ]), PVar "x"))
+    ("x", PApp (PApp (PComb B, papps [ PComb B; PVar "U"; PVar "V" ]), PVar "x"))
 
 let baxiom32 =
   Abs
     ( "x",
-      PApp (PApp (PComb B, PVar "u"), PApp (PApp (PComb B, PVar "v"), PVar "x"))
+      PApp (PApp (PComb B, PVar "U"), PApp (PApp (PComb B, PVar "V"), PVar "x"))
     )
 
-let () = print_endline (cl_to_string (pcl_to_cl baxiom32))
+let () = print_to_latex (pcl_to_cl baxiom31)
+let () = print_to_latex (pcl_to_cl baxiom32)

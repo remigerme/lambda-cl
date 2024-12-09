@@ -153,6 +153,17 @@ let rec pcl_to_cl t =
       let v = abs x u in
       pcl_to_cl v
 
+(***********)
+(* I-AXIOM *)
+(***********)
+let iaxiom11 = pcl_of_string "[x].BIx"
+let iaxiom12 = pcl_of_string "[x].x"
+
+(* Printing time *)
+let () = print_endline "I-axiom"
+let () = print_endline (cl_to_string (pcl_to_cl iaxiom11))
+let () = print_endline (cl_to_string (pcl_to_cl iaxiom12))
+
 (************)
 (* B-AXIOMS *)
 (************)
@@ -165,9 +176,29 @@ let baxiom32 = pcl_of_string "[x].BU(BVx)"
 
 (* Now let's print them *)
 (* We can also use print_to_latex to copy-paste LaTeX formula *)
+let () = print_endline "B-axioms"
 let () = print_endline (cl_to_string (pcl_to_cl baxiom11))
 let () = print_endline (cl_to_string (pcl_to_cl baxiom12))
 let () = print_endline (cl_to_string (pcl_to_cl baxiom21))
 let () = print_endline (cl_to_string (pcl_to_cl baxiom22))
 let () = print_endline (cl_to_string (pcl_to_cl baxiom31))
 let () = print_endline (cl_to_string (pcl_to_cl baxiom32))
+
+(************)
+(* C-AXIOMS *)
+(************)
+let caxiom11 = pcl_of_string "[x].C(C(BCx)V)Z"
+let caxiom12 = pcl_of_string "[x].C(CxZ)V"
+let caxiom21 = pcl_of_string "[x].C(B(CU)x)Z"
+let caxiom22 = pcl_of_string "[x].B(UZ)x"
+let caxiom31 = pcl_of_string "[x].B(CUV)x"
+let caxiom32 = pcl_of_string "[x].C(BUx)V"
+
+(* Printing time *)
+let () = print_endline "C-axioms"
+let () = print_endline (cl_to_string (pcl_to_cl caxiom11))
+let () = print_endline (cl_to_string (pcl_to_cl caxiom12))
+let () = print_endline (cl_to_string (pcl_to_cl caxiom21))
+let () = print_endline (cl_to_string (pcl_to_cl caxiom22))
+let () = print_endline (cl_to_string (pcl_to_cl caxiom31))
+let () = print_endline (cl_to_string (pcl_to_cl caxiom32))

@@ -156,47 +156,18 @@ let rec pcl_to_cl t =
 (************)
 (* B-AXIOMS *)
 (************)
-let baxiom11 =
-  Abs
-    ( "x",
-      PApp
-        ( PApp
-            ( PComb C,
-              PApp
-                (PApp (PComb C, papps [ PComb B; PComb B; PVar "x" ]), PVar "V")
-            ),
-          PVar "Z" ) )
+let baxiom11 = pcl_of_string "[x].C(C(BBx)V)Z"
+let baxiom12 = pcl_of_string "[x].CxVZ"
+let baxiom21 = pcl_of_string "[x].C(B(BU)x)Z"
+let baxiom22 = pcl_of_string "[x].BU(CxZ)"
+let baxiom31 = pcl_of_string "[x].B(BUV)x"
+let baxiom32 = pcl_of_string "[x].BU(BVx)"
 
-let baxiom12 = Abs ("x", papps [ PComb C; PVar "x"; PVar "V"; PVar "Z" ])
-
-let baxiom21 =
-  Abs
-    ( "x",
-      PApp
-        ( PApp
-            ( PComb C,
-              PApp (PApp (PComb B, papps [ PComb B; PVar "U" ]), PVar "x") ),
-          PVar "Z" ) )
-
-let baxiom22 =
-  Abs
-    ( "x",
-      PApp (papps [ PComb B; PVar "U" ], papps [ PComb C; PVar "x"; PVar "Z" ])
-    )
-
-let baxiom31 =
-  Abs
-    ("x", PApp (PApp (PComb B, papps [ PComb B; PVar "U"; PVar "V" ]), PVar "x"))
-
-let baxiom32 =
-  Abs
-    ( "x",
-      PApp (PApp (PComb B, PVar "U"), PApp (PApp (PComb B, PVar "V"), PVar "x"))
-    )
-
-let () = print_to_latex (pcl_to_cl baxiom11)
-let () = print_to_latex (pcl_to_cl baxiom12)
-let () = print_to_latex (pcl_to_cl baxiom21)
-let () = print_to_latex (pcl_to_cl baxiom22)
-let () = print_to_latex (pcl_to_cl baxiom31)
-let () = print_to_latex (pcl_to_cl baxiom32)
+(* Now let's print them *)
+(* We can also use print_to_latex to copy-paste LaTeX formula *)
+let () = print_endline (cl_to_string (pcl_to_cl baxiom11))
+let () = print_endline (cl_to_string (pcl_to_cl baxiom12))
+let () = print_endline (cl_to_string (pcl_to_cl baxiom21))
+let () = print_endline (cl_to_string (pcl_to_cl baxiom22))
+let () = print_endline (cl_to_string (pcl_to_cl baxiom31))
+let () = print_endline (cl_to_string (pcl_to_cl baxiom32))

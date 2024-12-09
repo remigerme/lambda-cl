@@ -44,6 +44,57 @@ let rec pcl_to_string t =
   | PApp (u, v) -> "(" ^ pcl_to_string u ^ pcl_to_string v ^ ")"
   | Abs (x, u) -> "[" ^ x ^ "].(" ^ pcl_to_string u ^ ")"
 
+exception ParsingError
+
+let surronding_parentheses s =
+  let n = String.length s in
+  let rec aux i ic =
+    if i = n - 1 then ic = 1 && s.[i] = ')'
+    else if i = 0 then if s.[i] <> '(' then false else aux 1 1
+    else
+      match s.[i] with
+      | '(' -> aux (i + 1) (ic + 1)
+      | ')' -> if ic > 0 then aux (i + 1) (ic - 1) else raise ParsingError
+      | _ -> aux (i + 1) ic
+  in
+  aux 0 0
+
+let last_token_idx s =
+  let n = String.length s in
+  let rec aux i ic =
+    if i < 0 then raise ParsingError
+    else if i = n - 1 && s.[i] <> ')' then i
+    else if s.[i] = ')' then aux (i - 1) (ic + 1)
+    else if s.[i] = '(' then if ic = 1 then i else aux (i - 1) (ic - 1)
+    else aux (i - 1) ic
+  in
+  aux (n - 1) 0
+
+(** Utility to parse a PCL term from a string *)
+let rec pcl_of_string s =
+  let n = String.length s in
+  if n = 0 then raise ParsingError (* Empty string : error *)
+  else if n = 1 then
+    (* One character : combinator or variable *)
+    match s.[0] with
+    | 'I' -> PComb I
+    | 'B' -> PComb B
+    | 'C' -> PComb C
+    | c -> PVar (String.make 1 c)
+  else if surronding_parentheses s then
+    (* Useless parentheses around the whole string *)
+    pcl_of_string (String.sub s 1 (n - 2))
+  else if n >= 4 && s.[0] = '[' && s.[2] = ']' && s.[3] = '.' then
+    (* Abstraction *)
+    let x = String.make 1 s.[1] in
+    Abs (x, pcl_of_string (String.sub s 4 (n - 4)))
+  else
+    (* Application, let's retrieve the right token *)
+    let idx = last_token_idx s in
+    let left = String.sub s 0 idx in
+    let right = String.sub s idx (n - idx) in
+    PApp (pcl_of_string left, pcl_of_string right)
+
 let latexify s =
   let buf = Buffer.create (String.length s) in
   String.iter

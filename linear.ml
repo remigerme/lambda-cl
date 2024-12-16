@@ -132,17 +132,21 @@ let rec pfree x t =
   | Abs (y, u) -> pfree x u
 
 let rec abs x t =
-  match t with
-  | PVar y when x = y -> PComb I
-  | PVar y -> PVar y
-  | PComb c -> PComb c
-  | PApp (u, v) when pfree x u && not (pfree x v) ->
-      papps [ PComb C; abs x u; v ]
-  | PApp (u, v) when (not (pfree x u)) && pfree x v ->
-      papps [ PComb B; u; abs x v ]
-  | PApp (u, v) -> raise AbstractionError
-  | Abs (y, u) when x = y -> Abs (y, u)
-  | Abs (y, u) -> Abs (y, abs x u)
+  if not (pfree x t) then raise AbstractionError
+  else
+    match t with
+    | PVar y when x = y -> PComb I
+    | PVar y -> PVar y
+    | PComb c -> PComb c
+    | PApp (u, v) when pfree x u && not (pfree x v) ->
+        papps [ PComb C; abs x u; v ]
+    | PApp (u, v) when (not (pfree x u)) && pfree x v ->
+        papps [ PComb B; u; abs x v ]
+    | PApp (u, v) -> raise AbstractionError
+    | Abs (y, u) ->
+        (* First expand the nested abstraction *)
+        let p = abs y u in
+        abs x p
 
 let rec pcl_to_cl t =
   match t with
@@ -202,3 +206,14 @@ let () = print_to_latex (pcl_to_cl caxiom21)
 let () = print_to_latex (pcl_to_cl caxiom22)
 let () = print_to_latex (pcl_to_cl caxiom31)
 let () = print_to_latex (pcl_to_cl caxiom32)
+
+(*************)
+(* ETA-AXIOM *)
+(*************)
+let etaaxiom1 = pcl_of_string "[u].[x].ux"
+let etaaxiom2 = pcl_of_string "I"
+
+(* Printing time *)
+let () = print_endline "Eta-axiom"
+let () = print_to_latex (pcl_to_cl etaaxiom1)
+let () = print_to_latex (pcl_to_cl etaaxiom2)

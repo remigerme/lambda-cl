@@ -172,7 +172,7 @@ let () = print_endline (cl_to_string (pcl_to_cl iaxiom12))
 (* B-AXIOMS *)
 (************)
 let baxiom11 = pcl_of_string "[x].[v].[z].C(C(BBx)v)z"
-let baxiom12 = pcl_of_string "[x].[v].[z].Cxvz"
+let baxiom12 = pcl_of_string "[x].[v].[z].Cx(vz)"
 let baxiom21 = pcl_of_string "[x].[u].[z].C(B(Bu)x)z"
 let baxiom22 = pcl_of_string "[x].[u].[z].Bu(Cxz)"
 let baxiom31 = pcl_of_string "[x].[u].[v].B(Buv)x"

@@ -1,1 +1,3 @@
-.ocamlformat
+*.agdai
+.DS_Store
+.vscode

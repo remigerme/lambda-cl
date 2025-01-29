@@ -1,6 +1,6 @@
 open import Types
 
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; subst)
 
 -- Typed CL terms
 data _⊢_ : Ctx → Type → Set where
@@ -29,15 +29,9 @@ zero =-var suc y = fail -- not the same variables, can't say anything on types
 suc x =-var zero = fail -- not the same variables, can't say anything on types
 suc x =-var suc y = x =-var y
 
--- TODO : prove this lemma
 -- Is it a good idea / approach ?
 tm-type-lem : {Γ : Ctx} {A B : Type} → Γ ⊢ A → A ≡ B → Γ ⊢ B
-tm-type-lem (var zero) eq = var {!   !}
-tm-type-lem (var (suc x)) eq = var (suc {!   !})
-tm-type-lem (_·_ {A = A₁} t u) eq = tm-type-lem t (cong (λ b → A₁ ⇒ b) eq) · u
-tm-type-lem I eq = {!   !}
-tm-type-lem K eq = {!   !}
-tm-type-lem S eq = {!   !}
+tm-type-lem {Γ} t eq = subst (λ T → Γ ⊢ T) eq t
 
 abs : {Γ : Ctx} {A B : Type} → Γ ∋ A → Γ ⊢ B → Γ ⊢ (A ⇒ B)
 abs {Γ} {A} x (var y) with x =-var y

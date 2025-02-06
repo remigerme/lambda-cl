@@ -1,6 +1,6 @@
 open import Types
 
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; subst)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; subst; trans)
 
 -- Typed CL terms
 data _⊢_ : Ctx → Type → Set where
@@ -42,7 +42,24 @@ abs x I       = K · I
 abs x K       = K · K
 abs x S       = K · S
 
+_[_/_] : {Γ : Ctx} {A B : Type} → Γ ⊢ A → Γ ⊢ B → Γ ∋ B → Γ ⊢ A
+var y [ u / x ] with x =-var y
+... | done eq = tm-type-lem u eq
+... | fail = var y
+(t · t') [ u / x ] = (t [ u / x ]) · (t' [ u / x ])
+I [ u / x ] = I
+K [ u / x ] = K
+S [ u / x ] = S
 
+red-th : {Γ : Ctx} {A B : Type} {x : Γ ∋ A} {t : Γ ⊢ B} {u : Γ ⊢ A} → ((abs x t) · u) ↝ (t [ u / x ])
+red-th {Γ} {A} {B} {x} {t} {u} with t
+... | s · s' = {! ↝S  !}
+... | I = ↝K
+... | K = ↝K
+... | S = ↝K
+... | var y with x =-var y
+...     | done refl = ↝I
+...     | fail = ↝K
 
 
 -- Basic tests manipulating defs

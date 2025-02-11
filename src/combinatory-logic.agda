@@ -51,9 +51,20 @@ I [ u / x ] = I
 K [ u / x ] = K
 S [ u / x ] = S
 
+trans-↝ : {Γ : Ctx} {A : Type} {u v w : Γ ⊢ A} → u ↝ v → v ↝ w → u ↝ w
+trans-↝ (↝l r1 u) r2 = {!   !}
+trans-↝ (↝r t r1) r2 = {!   !}
+trans-↝ ↝I r2 = {!   !}
+trans-↝ ↝K r2 = {!   !}
+trans-↝ ↝S r2 = {!   !}
+
 red-th : {Γ : Ctx} {A B : Type} {x : Γ ∋ A} {t : Γ ⊢ B} {u : Γ ⊢ A} → ((abs x t) · u) ↝ (t [ u / x ])
 red-th {Γ} {A} {B} {x} {t} {u} with t
-... | s · s' = {! ↝S  !}
+... | s · s' = trans-↝ ↝S (trans-↝ (↝l (red-th {t = s} ) (abs x s' · u)) (↝r (s [ u / x ]) red-th))
+    -- abs x (s · s') · u ↝  (abs x s · u) · (abs x s' · u) by ↝S
+    -- abs x s · u ↝ s [ u / x ] thanks to red-th
+    -- abs x s' · u ↝ s' [ u / x ] thanks to red-th
+    -- abs x (s · s') · u ↝ (s [ u / x ]) · (s' [ u / x ]) by trans
 ... | I = ↝K
 ... | K = ↝K
 ... | S = ↝K

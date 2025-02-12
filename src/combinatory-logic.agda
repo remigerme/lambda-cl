@@ -1,4 +1,6 @@
-open import Types
+module combinatory-logic where
+
+open import types
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; subst; trans)
 open import Relation.Binary.Construct.Closure.ReflexiveTransitive using (Star; ε; _◅_; _▻_)

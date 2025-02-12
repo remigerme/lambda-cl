@@ -1,4 +1,4 @@
-module Types where
+module types where
 
 open import Data.Nat
 

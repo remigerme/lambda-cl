@@ -1,7 +1,7 @@
 open import Types
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; subst; trans)
-open import Relation.Binary.Construct.Closure.ReflexiveTransitive using (Star)
+open import Relation.Binary.Construct.Closure.ReflexiveTransitive using (Star; ε; _◅_; _▻_)
 
 -- Typed CL terms
 data _⊢_ : Ctx → Type → Set where
@@ -20,8 +20,26 @@ data _↠₁_ : {Γ : Ctx} {A : Type} → Γ ⊢ A → Γ ⊢ A → Set where
     ↠₁S : ∀ {Γ A B C} {t : Γ ⊢ (A ⇒ (B ⇒ C))} → {u : Γ ⊢ (A ⇒ B)} → {v : Γ ⊢ A} → (((S · t) · u) · v) ↠₁ ((t · v) · (u · v))
 
 -- Weak reduction : multiple steps
-_↠_ : ∀ {Γ : Ctx} {A : Type} → Γ ⊢ A → Γ ⊢ A → Set
+_↠_ : {Γ : Ctx} {A : Type} → Γ ⊢ A → Γ ⊢ A → Set
 _↠_ = Star _↠₁_
+
+-- Defining shortcuts for convenience
+↠l : ∀ {Γ A B} {t t' : Γ ⊢ (A ⇒ B)} → t ↠ t' → (u : Γ ⊢ A) → (t · u) ↠ (t' · u)
+↠l ε u = ε
+↠l (x ◅ r) u = ↠₁l x u ◅ ↠l r u
+
+↠r : ∀ {Γ A B} (t : Γ ⊢ (A ⇒ B)) → {u u' : Γ ⊢ A} → u ↠ u' → (t · u) ↠ (t · u')
+↠r t ε = ε
+↠r t (x ◅ r) = ↠₁r t x ◅ ↠r t r
+
+↠I : ∀ {Γ A} {t : Γ ⊢ A} → (I · t) ↠ t
+↠I = ε ▻ ↠₁I
+
+↠K : ∀ {Γ A B} {t : Γ ⊢ A} {u : Γ ⊢ B} → ((K · t) · u) ↠ t
+↠K = ε ▻ ↠₁K
+
+↠S : ∀ {Γ A B C} {t : Γ ⊢ (A ⇒ (B ⇒ C))} → {u : Γ ⊢ (A ⇒ B)} → {v : Γ ⊢ A} → (((S · t) · u) · v) ↠ ((t · v) · (u · v))
+↠S = ε ▻ ↠₁S
 
 data Result (A : Set) : Set where
     done : A → Result A
@@ -55,22 +73,25 @@ I [ u / x ] = I
 K [ u / x ] = K
 S [ u / x ] = S
 
-trans-↠₁ : {Γ : Ctx} {A : Type} {u v w : Γ ⊢ A} → u ↠₁ v → v ↠₁ w → u ↠₁ w
-trans-↠₁ = {!   !}
+trans-↠ : {Γ : Ctx} {A : Type} {u v w : Γ ⊢ A} → u ↠ v → v ↠ w → u ↠ w
+trans-↠ ε vw = vw
+trans-↠ (x ◅ s) vw = x ◅ trans-↠ s vw
 
-red-th : {Γ : Ctx} {A B : Type} {x : Γ ∋ A} {t : Γ ⊢ B} {u : Γ ⊢ A} → ((abs x t) · u) ↠₁ (t [ u / x ])
+-- Reduction / substitution theorem
+-- Details of the annoying case below
+-- abs x (s · s') · u ↠  (abs x s · u) · (abs x s' · u) by ↠S
+-- abs x s · u        ↠ s [ u / x ]                     by rec on red-th
+-- abs x s' · u       ↠ s' [ u / x ]                    by rec on red-th
+-- abs x (s · s') · u ↠ (s [ u / x ]) · (s' [ u / x ])  by trans
+red-th : {Γ : Ctx} {A B : Type} {x : Γ ∋ A} {t : Γ ⊢ B} {u : Γ ⊢ A} → ((abs x t) · u) ↠ (t [ u / x ])
 red-th {Γ} {A} {B} {x} {t} {u} with t
-... | s · s' = trans-↠₁ ↠₁S (trans-↠₁ (↠₁l (red-th {t = s}) (abs x s' · u)) (↠₁r (s [ u / x ]) (red-th {t = s'})))
-    -- abs x (s · s') · u ↠₁  (abs x s · u) · (abs x s' · u) by ↠₁S
-    -- abs x s · u ↠₁ s [ u / x ] thanks to red-th
-    -- abs x s' · u ↠₁ s' [ u / x ] thanks to red-th
-    -- abs x (s · s') · u ↠₁ (s [ u / x ]) · (s' [ u / x ]) by trans
-... | I = ↠₁K
-... | K = ↠₁K
-... | S = ↠₁K
+... | s · s' = trans-↠ ↠S (trans-↠ (↠l (red-th {t = s}) (abs x s' · u)) (↠r (s [ u / x ]) (red-th {t = s'})))
+... | I = ↠K
+... | K = ↠K
+... | S = ↠K
 ... | var y with x =-var y
-...     | done refl = ↠₁I
-...     | fail = ↠₁K
+...     | done refl = ↠I
+...     | fail = ↠K
 
 
 -- Basic tests manipulating defs

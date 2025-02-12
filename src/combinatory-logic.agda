@@ -1,6 +1,7 @@
 open import Types
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; subst; trans)
+open import Relation.Binary.Construct.Closure.ReflexiveTransitive using (Star)
 
 -- Typed CL terms
 data _⊢_ : Ctx → Type → Set where
@@ -10,13 +11,17 @@ data _⊢_ : Ctx → Type → Set where
     K   : ∀ {Γ A B}                 → Γ ⊢ (A ⇒ (B ⇒ A))
     S   : ∀ {Γ A B C}               → Γ ⊢ ((A ⇒ (B ⇒ C)) ⇒ ((A ⇒ B) ⇒ (A ⇒ C)))
 
--- Weak reduction
-data _↝_ : {Γ : Ctx} {A : Type} → Γ ⊢ A → Γ ⊢ A → Set where
-    ↝l : ∀ {Γ A B} {t t' : Γ ⊢ (A ⇒ B)} → t ↝ t' → (u : Γ ⊢ A)                 → (t · u) ↝ (t' · u)
-    ↝r : ∀ {Γ A B} (t : Γ ⊢ (A ⇒ B)) → {u u' : Γ ⊢ A} → u ↝ u'                 → (t · u) ↝ (t · u')
-    ↝I : ∀ {Γ A} {t : Γ ⊢ A}                                                   → (I · t) ↝ t
-    ↝K : ∀ {Γ A B} {t : Γ ⊢ A} → {u : Γ ⊢ B}                                   → ((K · t) · u) ↝ t
-    ↝S : ∀ {Γ A B C} {t : Γ ⊢ (A ⇒ (B ⇒ C))} → {u : Γ ⊢ (A ⇒ B)} → {v : Γ ⊢ A} → (((S · t) · u) · v) ↝ ((t · v) · (u · v))
+-- Weak reduction : one step
+data _↠₁_ : {Γ : Ctx} {A : Type} → Γ ⊢ A → Γ ⊢ A → Set where
+    ↠₁l : ∀ {Γ A B} {t t' : Γ ⊢ (A ⇒ B)} → t ↠₁ t' → (u : Γ ⊢ A)                → (t · u) ↠₁ (t' · u)
+    ↠₁r : ∀ {Γ A B} (t : Γ ⊢ (A ⇒ B)) → {u u' : Γ ⊢ A} → u ↠₁ u'                → (t · u) ↠₁ (t · u')
+    ↠₁I : ∀ {Γ A} {t : Γ ⊢ A}                                                   → (I · t) ↠₁ t
+    ↠₁K : ∀ {Γ A B} {t : Γ ⊢ A} → {u : Γ ⊢ B}                                   → ((K · t) · u) ↠₁ t
+    ↠₁S : ∀ {Γ A B C} {t : Γ ⊢ (A ⇒ (B ⇒ C))} → {u : Γ ⊢ (A ⇒ B)} → {v : Γ ⊢ A} → (((S · t) · u) · v) ↠₁ ((t · v) · (u · v))
+
+-- Weak reduction : multiple steps
+_↠_ : ∀ {Γ : Ctx} {A : Type} → Γ ⊢ A → Γ ⊢ A → Set
+_↠_ = Star _↠₁_
 
 data Result (A : Set) : Set where
     done : A → Result A
@@ -29,7 +34,6 @@ zero =-var suc y = fail -- not the same variables, can't say anything on types
 suc x =-var zero = fail -- not the same variables, can't say anything on types
 suc x =-var suc y = x =-var y
 
--- Is it a good idea / approach ?
 tm-type-lem : {Γ : Ctx} {A B : Type} → Γ ⊢ A → A ≡ B → Γ ⊢ B
 tm-type-lem {Γ} t eq = subst (λ T → Γ ⊢ T) eq t
 
@@ -51,26 +55,22 @@ I [ u / x ] = I
 K [ u / x ] = K
 S [ u / x ] = S
 
-trans-↝ : {Γ : Ctx} {A : Type} {u v w : Γ ⊢ A} → u ↝ v → v ↝ w → u ↝ w
-trans-↝ (↝l r1 u) r2 = {!   !}
-trans-↝ (↝r t r1) r2 = {!   !}
-trans-↝ ↝I r2 = {!   !}
-trans-↝ ↝K r2 = {!   !}
-trans-↝ ↝S r2 = {!   !}
+trans-↠₁ : {Γ : Ctx} {A : Type} {u v w : Γ ⊢ A} → u ↠₁ v → v ↠₁ w → u ↠₁ w
+trans-↠₁ = {!   !}
 
-red-th : {Γ : Ctx} {A B : Type} {x : Γ ∋ A} {t : Γ ⊢ B} {u : Γ ⊢ A} → ((abs x t) · u) ↝ (t [ u / x ])
+red-th : {Γ : Ctx} {A B : Type} {x : Γ ∋ A} {t : Γ ⊢ B} {u : Γ ⊢ A} → ((abs x t) · u) ↠₁ (t [ u / x ])
 red-th {Γ} {A} {B} {x} {t} {u} with t
-... | s · s' = trans-↝ ↝S (trans-↝ (↝l (red-th {t = s} ) (abs x s' · u)) (↝r (s [ u / x ]) red-th))
-    -- abs x (s · s') · u ↝  (abs x s · u) · (abs x s' · u) by ↝S
-    -- abs x s · u ↝ s [ u / x ] thanks to red-th
-    -- abs x s' · u ↝ s' [ u / x ] thanks to red-th
-    -- abs x (s · s') · u ↝ (s [ u / x ]) · (s' [ u / x ]) by trans
-... | I = ↝K
-... | K = ↝K
-... | S = ↝K
+... | s · s' = trans-↠₁ ↠₁S (trans-↠₁ (↠₁l (red-th {t = s}) (abs x s' · u)) (↠₁r (s [ u / x ]) (red-th {t = s'})))
+    -- abs x (s · s') · u ↠₁  (abs x s · u) · (abs x s' · u) by ↠₁S
+    -- abs x s · u ↠₁ s [ u / x ] thanks to red-th
+    -- abs x s' · u ↠₁ s' [ u / x ] thanks to red-th
+    -- abs x (s · s') · u ↠₁ (s [ u / x ]) · (s' [ u / x ]) by trans
+... | I = ↠₁K
+... | K = ↠₁K
+... | S = ↠₁K
 ... | var y with x =-var y
-...     | done refl = ↝I
-...     | fail = ↝K
+...     | done refl = ↠₁I
+...     | fail = ↠₁K
 
 
 -- Basic tests manipulating defs
@@ -89,17 +89,17 @@ term = I · var zero
 rterm : Γ ⊢ A
 rterm = var zero
 
--- Ix ↝ x
-red : term ↝ rterm
-red = ↝I
+-- Ix ↠₁ x
+red : term ↠₁ rterm
+red = ↠₁I
 
 -- Kxy
 termb : Γ ⊢ A
 termb = (K · var zero) · (var (suc zero))
 
--- Kxy ↝ x
-redb : termb ↝ rterm
-redb = ↝K
+-- Kxy ↠₁ x
+redb : termb ↠₁ rterm
+redb = ↠₁K
 
 -- Testing abstraction
 -- [x].x

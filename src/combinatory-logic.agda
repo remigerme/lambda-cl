@@ -7,11 +7,14 @@ open import Relation.Binary.Construct.Closure.ReflexiveTransitive using (Star; �
 
 -- Typed CL terms
 data _⊢_ : Ctx → Type → Set where
-    var : ∀ {Γ A}     → Γ ∋ A       → Γ ⊢ A
-    _·_ : ∀ {Γ A B}   → Γ ⊢ (A ⇒ B) → Γ ⊢ A → Γ ⊢ B
-    I   : ∀ {Γ A}                   → Γ ⊢ (A ⇒ A)
-    K   : ∀ {Γ A B}                 → Γ ⊢ (A ⇒ (B ⇒ A))
-    S   : ∀ {Γ A B C}               → Γ ⊢ ((A ⇒ (B ⇒ C)) ⇒ ((A ⇒ B) ⇒ (A ⇒ C)))
+    var : ∀ {Γ A}     → Γ ∋ A     → Γ ⊢ A
+    _·_ : ∀ {Γ A B}   → Γ ⊢ A ⇒ B → Γ ⊢ A → Γ ⊢ B
+    I   : ∀ {Γ A}                 → Γ ⊢ A ⇒ A
+    K   : ∀ {Γ A B}               → Γ ⊢ A ⇒ (B ⇒ A)
+    S   : ∀ {Γ A B C}             → Γ ⊢ (A ⇒ (B ⇒ C)) ⇒ ((A ⇒ B) ⇒ (A ⇒ C))
+
+infixl 30 _·_
+infix 10 _⊢_
 
 -- Weak reduction : one step
 data _↠₁_ : {Γ : Ctx} {A : Type} → Γ ⊢ A → Γ ⊢ A → Set where
@@ -60,8 +63,8 @@ tm-type-lem {Γ} t eq = subst (λ T → Γ ⊢ T) eq t
 abs : {Γ : Ctx} {A B : Type} → Γ ∋ A → Γ ⊢ B → Γ ⊢ (A ⇒ B)
 abs {Γ} {A} x (var y) with x =-var y
 ... | done eq = tm-type-lem I (cong (λ b → A ⇒ b) eq)
-... | fail    = K · (var y)
-abs x (t · u) = (S · (abs x t)) · (abs x u)
+... | fail    = K · var y
+abs x (t · u) = S · abs x t · abs x u
 abs x I       = K · I
 abs x K       = K · K
 abs x S       = K · S
@@ -101,7 +104,7 @@ A : Type
 A = X 0
 
 Γ : Ctx
-Γ = (Ø , A) , A
+Γ = Ø , A , A
 
 -- Testing reduction
 -- Ix
@@ -118,7 +121,7 @@ red = ↠₁I
 
 -- Kxy
 termb : Γ ⊢ A
-termb = (K · var zero) · (var (suc zero))
+termb = K · var zero · var (suc zero)
 
 -- Kxy ↠₁ x
 redb : termb ↠₁ rterm

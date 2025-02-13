@@ -7,9 +7,10 @@ data _†_ : Ctx → Type → Set where
     _·_  : ∀ {Γ A B} → Γ † A ⇒ B → Γ † A → Γ † B
     abs_ : ∀ {Γ A B} → Γ , A † B         → Γ † A ⇒ B
 
-data _⊆_ : Ctx → Ctx → Set where
-    Ø⊆Ø  : Ø ⊆ Ø
-    keep : ∀ {Γ Δ A} → Γ ⊆ Δ → Γ , A ⊆ Δ , A
-    drop : ∀ {Γ Δ A} → Γ ⊆ Δ → Γ , A ⊆ Δ , A
+wk : ∀ {Γ Δ A} → Γ ⊆ Δ → Γ † A → Δ † A
+wk p (var x) = var (wk-var p x)
+wk p (t · u) = wk p t · wk p u
+wk p (abs t) = abs wk (keep p) t
 
-infix 10 _⊆_
+wk-last : ∀ {Γ A B} → Γ † A → Γ , B † A
+wk-last t = wk (drop ⊆-refl) t

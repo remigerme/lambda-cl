@@ -16,6 +16,16 @@ data _⊢_ : Ctx → Type → Set where
 infixl 30 _·_
 infix 10 _⊢_
 
+wk : ∀ {Γ Δ A} → Γ ⊆ Δ → Γ ⊢ A → Δ ⊢ A
+wk p (var x) = var (wk-var p x)
+wk p (t · u) = wk p t · wk p u
+wk p I       = I
+wk p K       = K
+wk p S       = S
+
+wk-last : ∀ {Γ A B} → Γ ⊢ A → Γ , B ⊢ A
+wk-last t = wk (drop ⊆-refl) t
+
 -- Weak reduction : one step
 data _↠₁_ : {Γ : Ctx} {A : Type} → Γ ⊢ A → Γ ⊢ A → Set where
     ↠₁l : ∀ {Γ A B} {t t' : Γ ⊢ (A ⇒ B)} → t ↠₁ t' → (u : Γ ⊢ A)                → (t · u) ↠₁ (t' · u)

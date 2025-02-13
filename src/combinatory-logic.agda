@@ -56,37 +56,27 @@ _↠_ = Star _↠₁_
 ↠S : ∀ {Γ A B C} {t : Γ ⊢ (A ⇒ (B ⇒ C))} → {u : Γ ⊢ (A ⇒ B)} → {v : Γ ⊢ A} → (((S · t) · u) · v) ↠ ((t · v) · (u · v))
 ↠S = ε ▻ ↠₁S
 
-data Result (A : Set) : Set where
-    done : A → Result A
-    fail : Result A
-
--- Determine wether two variables are the exact same or not
-_=-var_ : {Γ : Ctx} {A B : Type} → Γ ∋ A → Γ ∋ B → Result (A ≡ B)
-zero =-var zero = done refl -- same variables so same types
-zero =-var suc y = fail -- not the same variables, can't say anything on types
-suc x =-var zero = fail -- not the same variables, can't say anything on types
-suc x =-var suc y = x =-var y
-
+-- Now useless
 tm-type-lem : {Γ : Ctx} {A B : Type} → Γ ⊢ A → A ≡ B → Γ ⊢ B
 tm-type-lem {Γ} t eq = subst (λ T → Γ ⊢ T) eq t
 
-abs : {Γ : Ctx} {A B : Type} → Γ ∋ A → Γ ⊢ B → Γ ⊢ (A ⇒ B)
-abs {Γ} {A} x (var y) with x =-var y
-... | done eq = tm-type-lem I (cong (λ b → A ⇒ b) eq)
-... | fail    = K · var y
-abs x (t · u) = S · abs x t · abs x u
-abs x I       = K · I
-abs x K       = K · K
-abs x S       = K · S
+abs : {Γ : Ctx} {A B : Type} → Γ , A ⊢ B → Γ ⊢ (A ⇒ B)
+abs (var zero) = I
+abs (var (suc x)) = K · var x
+abs (t · u) = S · abs t · abs u
+abs I = K · I
+abs K = K · K
+abs S = K · S
 
-_[_/_] : {Γ : Ctx} {A B : Type} → Γ ⊢ A → Γ ⊢ B → Γ ∋ B → Γ ⊢ A
-var y [ u / x ] with x =-var y
-... | done eq = tm-type-lem u eq
-... | fail = var y
-(t · t') [ u / x ] = (t [ u / x ]) · (t' [ u / x ])
-I [ u / x ] = I
-K [ u / x ] = K
-S [ u / x ] = S
+_[_] : ∀ {Γ Δ A} → Γ ⊢ A → (∀ {B} → Γ ∋ B → Δ ⊢ B) → Δ ⊢ A
+var x [ σ ] = σ x
+(t · u) [ σ ] = (t [ σ ]) · (u [ σ ])
+I [ σ ] = I
+K [ σ ] = K
+S [ σ ] = S
+
+_[_/0] : ∀ {Γ A B} → Γ , B ⊢ A → Γ ⊢ B → Γ ⊢ A
+t [ u /0] = t [ (λ { zero → u ; (suc x) → var x}) ] 
 
 trans-↠ : {Γ : Ctx} {A : Type} {u v w : Γ ⊢ A} → u ↠ v → v ↠ w → u ↠ w
 trans-↠ ε vw = vw
@@ -98,16 +88,14 @@ trans-↠ (x ◅ s) vw = x ◅ trans-↠ s vw
 -- abs x s · u        ↠ s [ u / x ]                     by rec on red-th
 -- abs x s' · u       ↠ s' [ u / x ]                    by rec on red-th
 -- abs x (s · s') · u ↠ (s [ u / x ]) · (s' [ u / x ])  by trans
-red-th : {Γ : Ctx} {A B : Type} {x : Γ ∋ A} {t : Γ ⊢ B} {u : Γ ⊢ A} → ((abs x t) · u) ↠ (t [ u / x ])
-red-th {Γ} {A} {B} {x} {t} {u} with t
-... | s · s' = trans-↠ ↠S (trans-↠ (↠l (red-th {t = s}) (abs x s' · u)) (↠r (s [ u / x ]) (red-th {t = s'})))
+red-th' : {Γ : Ctx} {A B : Type} {t : Γ , A ⊢ B} {u : Γ ⊢ A} → ((abs t) · u) ↠ (t [ u /0])
+red-th' {Γ} {A} {B} {t} {u} with t
+... | var zero = ↠I
+... | var (suc x) = ↠K
+... | s · s' = trans-↠ ↠S (trans-↠ (↠l (red-th') (abs s' · u)) (↠r (s [ u /0]) red-th'))
 ... | I = ↠K
 ... | K = ↠K
 ... | S = ↠K
-... | var y with x =-var y
-...     | done refl = ↠I
-...     | fail = ↠K
-
 
 -- Basic tests manipulating defs
 A : Type
@@ -140,12 +128,12 @@ redb = ↠₁K
 -- Testing abstraction
 -- [x].x
 id : Γ ⊢ (A ⇒ A)
-id = abs zero (var zero)
+id = abs (var zero)
 
 -- [x].y
 k : Γ ⊢ (A ⇒ A)
-k = abs (suc zero) (var zero)
+k = abs (var (suc zero))
 
 -- [x].Kx
 skki : {B : Type} → Γ ⊢ (A ⇒ (B ⇒ A))
-skki = abs zero (K · var zero)
+skki = abs (K · var zero)

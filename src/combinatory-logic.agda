@@ -4,6 +4,7 @@ open import types
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; subst; trans)
 open import Relation.Binary.Construct.Closure.ReflexiveTransitive using (Star; ε; _◅_; _▻_)
+open import Relation.Binary.Construct.Closure.Symmetric using (SymClosure; fwd; bwd)
 
 -- Typed CL terms
 data _⊢_ : Ctx → Type → Set where
@@ -88,14 +89,17 @@ trans-↠ (x ◅ s) vw = x ◅ trans-↠ s vw
 -- abs x s · u        ↠ s [ u / x ]                     by rec on red-th
 -- abs x s' · u       ↠ s' [ u / x ]                    by rec on red-th
 -- abs x (s · s') · u ↠ (s [ u / x ]) · (s' [ u / x ])  by trans
-red-th' : {Γ : Ctx} {A B : Type} {t : Γ , A ⊢ B} {u : Γ ⊢ A} → ((abs t) · u) ↠ (t [ u /0])
-red-th' {Γ} {A} {B} {t} {u} with t
+red-th : {Γ : Ctx} {A B : Type} {t : Γ , A ⊢ B} {u : Γ ⊢ A} → ((abs t) · u) ↠ (t [ u /0])
+red-th {Γ} {A} {B} {t} {u} with t
 ... | var zero = ↠I
 ... | var (suc x) = ↠K
-... | s · s' = trans-↠ ↠S (trans-↠ (↠l (red-th') (abs s' · u)) (↠r (s [ u /0]) red-th'))
+... | s · s' = trans-↠ ↠S (trans-↠ (↠l (red-th) (abs s' · u)) (↠r (s [ u /0]) red-th))
 ... | I = ↠K
 ... | K = ↠K
 ... | S = ↠K
+
+_~_ : ∀ {Γ A} → Γ ⊢ A → Γ ⊢ A → Set
+_~_ = SymClosure _↠_
 
 -- Basic tests manipulating defs
 A : Type

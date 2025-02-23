@@ -4,6 +4,7 @@ open import types
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; subst; trans)
 open import Relation.Binary.Construct.Closure.ReflexiveTransitive using (Star; ε; _◅_; _▻_)
+open import Relation.Binary.Construct.Closure.Symmetric using (SymClosure; fwd; bwd)
 
 data _†_ : Ctx → Type → Set where
     var  : ∀ {Γ A} → Γ ∋ A               → Γ † A
@@ -37,3 +38,6 @@ data _↝₁_ : ∀ {Γ A} → Γ † A → Γ † A → Set where
 
 _↝_ : ∀ {Γ A} → Γ † A → Γ † A → Set
 _↝_ = Star _↝₁_
+
+_≈_ : ∀ {Γ A} → Γ † A → Γ † A → Set
+_≈_ = SymClosure _↝_

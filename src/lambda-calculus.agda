@@ -35,6 +35,7 @@ data _↝₁_ : ∀ {Γ A} → Γ † A → Γ † A → Set where
     ↝₁r : ∀ {Γ A B} (t : Γ † (A ⇒ B)) → {u u' : Γ † A} → u ↝₁ u' → (t · u) ↝₁ (t · u')
     ↝₁λ : ∀ {Γ A B} {t t' : Γ , A † B} →                 t ↝₁ t' → (abs t) ↝₁ (abs t') 
     ↝₁β : ∀ {Γ A B} →              (t : Γ , A † B) → (u : Γ † A) → ((abs t) · u) ↝₁ ((t [ u /0]))
+    ↝₁η : ∀ {Γ A B} →                            (u : Γ † A ⇒ B) → (abs (wk-last u · var zero)) ↝₁ u
 
 _↝_ : ∀ {Γ A} → Γ † A → Γ † A → Set
 _↝_ = Star _↝₁_

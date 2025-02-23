@@ -40,5 +40,11 @@ data _↝₁_ : ∀ {Γ A} → Γ † A → Γ † A → Set where
 _↝_ : ∀ {Γ A} → Γ † A → Γ † A → Set
 _↝_ = Star _↝₁_
 
+infix 10 _↝_
+
+ξ-proof : ∀ {Γ A B} → {t u : Γ , A † B} → t ↝ u → abs t ↝ abs u
+ξ-proof ε = ε
+ξ-proof (x ◅ p) = ↝₁λ x ◅ ξ-proof p
+
 _≈_ : ∀ {Γ A} → Γ † A → Γ † A → Set
 _≈_ = SymClosure _↝_

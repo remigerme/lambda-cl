@@ -39,29 +39,31 @@ data _↠₁_ : {Γ : Ctx} {A : Type} → Γ ⊢ A → Γ ⊢ A → Set where
 _↠_ : {Γ : Ctx} {A : Type} → Γ ⊢ A → Γ ⊢ A → Set
 _↠_ = Star _↠₁_
 
+infix 10 _↠_
+
 -- Defining shortcuts for convenience
-↠l : ∀ {Γ A B} {t t' : Γ ⊢ (A ⇒ B)} → t ↠ t' → (u : Γ ⊢ A) → (t · u) ↠ (t' · u)
+↠l : ∀ {Γ A B} {t t' : Γ ⊢ (A ⇒ B)} → t ↠ t' → (u : Γ ⊢ A) → t · u ↠ t' · u
 ↠l ε u = ε
 ↠l (x ◅ r) u = ↠₁l x u ◅ ↠l r u
 
-↠r : ∀ {Γ A B} (t : Γ ⊢ (A ⇒ B)) → {u u' : Γ ⊢ A} → u ↠ u' → (t · u) ↠ (t · u')
+↠r : ∀ {Γ A B} (t : Γ ⊢ (A ⇒ B)) → {u u' : Γ ⊢ A} → u ↠ u' → t · u ↠ t · u'
 ↠r t ε = ε
 ↠r t (x ◅ r) = ↠₁r t x ◅ ↠r t r
 
 ↠I : ∀ {Γ A} {t : Γ ⊢ A} → (I · t) ↠ t
 ↠I = ε ▻ ↠₁I
 
-↠K : ∀ {Γ A B} {t : Γ ⊢ A} {u : Γ ⊢ B} → ((K · t) · u) ↠ t
+↠K : ∀ {Γ A B} {t : Γ ⊢ A} {u : Γ ⊢ B} → (K · t) · u ↠ t
 ↠K = ε ▻ ↠₁K
 
-↠S : ∀ {Γ A B C} {t : Γ ⊢ (A ⇒ (B ⇒ C))} → {u : Γ ⊢ (A ⇒ B)} → {v : Γ ⊢ A} → (((S · t) · u) · v) ↠ ((t · v) · (u · v))
+↠S : ∀ {Γ A B C} {t : Γ ⊢ A ⇒ (B ⇒ C)} → {u : Γ ⊢ A ⇒ B} → {v : Γ ⊢ A} → S · t · u · v ↠ t · v · (u · v)
 ↠S = ε ▻ ↠₁S
 
 -- Now useless
 tm-type-lem : {Γ : Ctx} {A B : Type} → Γ ⊢ A → A ≡ B → Γ ⊢ B
 tm-type-lem {Γ} t eq = subst (λ T → Γ ⊢ T) eq t
 
-abs : {Γ : Ctx} {A B : Type} → Γ , A ⊢ B → Γ ⊢ (A ⇒ B)
+abs : {Γ : Ctx} {A B : Type} → Γ , A ⊢ B → Γ ⊢ A ⇒ B
 abs (var zero) = I
 abs (var (suc x)) = K · var x
 abs (t · u) = S · abs t · abs u
@@ -89,7 +91,7 @@ trans-↠ (x ◅ s) vw = x ◅ trans-↠ s vw
 -- abs x s · u        ↠ s [ u / x ]                     by rec on red-th
 -- abs x s' · u       ↠ s' [ u / x ]                    by rec on red-th
 -- abs x (s · s') · u ↠ (s [ u / x ]) · (s' [ u / x ])  by trans
-red-th : {Γ : Ctx} {A B : Type} {t : Γ , A ⊢ B} {u : Γ ⊢ A} → ((abs t) · u) ↠ (t [ u /0])
+red-th : {Γ : Ctx} {A B : Type} {t : Γ , A ⊢ B} {u : Γ ⊢ A} → (abs t) · u ↠ t [ u /0]
 red-th {Γ} {A} {B} {t} {u} with t
 ... | var zero = ↠I
 ... | var (suc x) = ↠K
@@ -98,8 +100,26 @@ red-th {Γ} {A} {B} {t} {u} with t
 ... | K = ↠K
 ... | S = ↠K
 
+-- Trying to do something similar to λ-calculus
+-- However we encounter the following problem.
+    -- Context :
+        -- p : Star _↠₁_ j u
+        -- x : t ↠₁ j
+        -- j, t, u : Γ , A ⊢ B
+    -- Goal : abs t ↠₁ abs j
+-- In λ-calculus, this was done using ↝₁λ
+-- but we have no such thing in CL, there is no garantuee we can do the reduction in one step
+-- especially because abs is not a CL ctor but a function defined on CL terms and might involve
+-- pretty long computations.
+
+-- ξ-failed-proof : ∀ {Γ A B} → {t u : Γ , A ⊢ B} → t ↠ u → abs t ↠ abs u
+-- ξ-failed-proof ε = ε
+-- ξ-failed-proof (x ◅ p) = {!   !} ◅ ξ-failed-proof p
+
 _~_ : ∀ {Γ A} → Γ ⊢ A → Γ ⊢ A → Set
 _~_ = SymClosure _↠_
+
+infix 10 _~_
 
 -- Basic tests manipulating defs
 A : Type

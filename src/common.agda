@@ -28,7 +28,13 @@ clλ-↠₁ : ∀ {Γ A} {u v : Γ ⊢ A} → u ↠₁ v → clλ u ↝ clλ v
 clλ-↠₁ (↠₁l e u) = ↝l (clλ-↠₁ e) (clλ u)
 clλ-↠₁ (↠₁r t e) = ↝r (clλ t) (clλ-↠₁ e)
 clλ-↠₁ {v = v} ↠₁I = red-th (var zero) (clλ v)
-clλ-↠₁ {v = v} (↠₁K {u = u}) = trans-↝ ({! ↝₁β ? ?  !} ◅ ε) (red-th (var zero) (clλ v))
+clλ-↠₁ {v = v} (↠₁K {u = u}) = trans-↝ (↝l (red-th (abs (var (suc zero))) (clλ v)) (clλ u)) {! red-th ? ?  !}
+-- We now need to prove :
+-- ((abs var (suc zero)) lambda-calculus.[ clλ v /0]) · clλ u ↝ clλ v
+-- which I expected to prove by re-applying reduction theorem once again, but adga complains :'(
+--
+-- Previous sketch :
+-- clλ-↠₁ {v = v} (↠₁K {u = u}) = trans-↝ ({! ↝₁β ? ?  !} ◅ ε) (red-th (var zero) (clλ v))
 -- In hole above we need to prove
 -- (abs (abs var (suc zero))) · clλ v · clλ u ↝ (abs var zero) · clλ v
 -- where things are a bit reversed

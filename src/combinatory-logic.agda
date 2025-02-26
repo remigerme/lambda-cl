@@ -91,11 +91,11 @@ trans-↠ (x ◅ s) vw = x ◅ trans-↠ s vw
 -- abs x s · u        ↠ s [ u / x ]                     by rec on red-th
 -- abs x s' · u       ↠ s' [ u / x ]                    by rec on red-th
 -- abs x (s · s') · u ↠ (s [ u / x ]) · (s' [ u / x ])  by trans
-red-th : {Γ : Ctx} {A B : Type} {t : Γ , A ⊢ B} {u : Γ ⊢ A} → (abs t) · u ↠ t [ u /0]
-red-th {Γ} {A} {B} {t} {u} with t
+red-th : {Γ : Ctx} {A B : Type} (t : Γ , A ⊢ B) → (u : Γ ⊢ A) → (abs t) · u ↠ t [ u /0]
+red-th t u with t
 ... | var zero = ↠I
 ... | var (suc x) = ↠K
-... | s · s' = trans-↠ ↠S (trans-↠ (↠l (red-th) (abs s' · u)) (↠r (s [ u /0]) red-th))
+... | s · s' = trans-↠ ↠S (trans-↠ (↠l (red-th s u) (abs s' · u)) (↠r (s [ u /0]) (red-th s' u)))
 ... | I = ↠K
 ... | K = ↠K
 ... | S = ↠K
@@ -111,10 +111,14 @@ red-th {Γ} {A} {B} {t} {u} with t
 -- but we have no such thing in CL, there is no garantuee we can do the reduction in one step
 -- especially because abs is not a CL ctor but a function defined on CL terms and might involve
 -- pretty long computations.
-
+--
 -- ξ-failed-proof : ∀ {Γ A B} → {t u : Γ , A ⊢ B} → t ↠ u → abs t ↠ abs u
 -- ξ-failed-proof ε = ε
 -- ξ-failed-proof (x ◅ p) = {!   !} ◅ ξ-failed-proof p
+
+-- Todo for later
+-- data _⇢₁_ : ∀ {Γ A} → Γ ⊢ A → Γ ⊢ A → Set where
+--    ⇢₁I : ∀ {Γ A B} → abs (S {A = A} {B} · (K · I) · var zero) ⇢₁ abs {Γ} (var zero)
 
 _~_ : ∀ {Γ A} → Γ ⊢ A → Γ ⊢ A → Set
 _~_ = SymClosure _↠_

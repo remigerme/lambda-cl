@@ -39,6 +39,7 @@ data _↠₁_ : {Γ : Ctx} {A : Type} → Γ ⊢ A → Γ ⊢ A → Set where
 _↠_ : {Γ : Ctx} {A : Type} → Γ ⊢ A → Γ ⊢ A → Set
 _↠_ = Star _↠₁_
 
+infix 10 _↠₁_
 infix 10 _↠_
 
 -- Defining shortcuts for convenience
@@ -124,44 +125,3 @@ _~_ : ∀ {Γ A} → Γ ⊢ A → Γ ⊢ A → Set
 _~_ = SymClosure _↠_
 
 infix 10 _~_
-
--- Basic tests manipulating defs
-A : Type
-A = X 0
-
-Γ : Ctx
-Γ = Ø , A , A
-
--- Testing reduction
--- Ix
-term : Γ ⊢ A
-term = I · var zero
-
--- x
-rterm : Γ ⊢ A
-rterm = var zero
-
--- Ix ↠₁ x
-red : term ↠₁ rterm
-red = ↠₁I
-
--- Kxy
-termb : Γ ⊢ A
-termb = K · var zero · var (suc zero)
-
--- Kxy ↠₁ x
-redb : termb ↠₁ rterm
-redb = ↠₁K
-
--- Testing abstraction
--- [x].x
-id : Γ ⊢ (A ⇒ A)
-id = abs (var zero)
-
--- [x].y
-k : Γ ⊢ (A ⇒ A)
-k = abs (var (suc zero))
-
--- [x].Kx
-skki : {B : Type} → Γ ⊢ (A ⇒ (B ⇒ A))
-skki = abs (K · var zero)

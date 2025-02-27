@@ -1,3 +1,5 @@
+module common where
+
 open import types
 open import combinatory-logic renaming (abs to abs-cl; wk-last to wk-last-cl; red-th to red-th-cl) 
 open import lambda-calculus
@@ -39,7 +41,12 @@ clλ-↠₁ {v = v} (↠₁K {u = u}) = trans-↝ (↝l (red-th (abs (var (suc z
 -- (abs (abs var (suc zero))) · clλ v · clλ u ↝ (abs var zero) · clλ v
 -- where things are a bit reversed
 -- note that I believe it to be intuitively the same problem as red-th-2 (from lambda-calculus.agda)
-clλ-↠₁ ↠₁S = {!  !}
+clλ-↠₁ (↠₁S {t = t} {u} {v}) = 
+    trans-↝ 
+        (↝l (↝l (red-th (abs (abs (var (suc (suc zero)) · var zero · (var (suc zero) · var zero)))) (clλ t)) (clλ u)) (clλ v)) 
+        (trans-↝ 
+            (↝l (red-th (abs ({!   !} · (var (suc zero) · var zero))) (clλ u)) (clλ v)) 
+            {!  !})
 
 -- Lemma 9.5.a
 clλ-↠ : ∀ {Γ A} {u v : Γ ⊢ A} → u ↠ v → clλ u ↝ clλ v

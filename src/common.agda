@@ -48,6 +48,41 @@ clλ-↠₁ (↠₁S {t = t} {u} {v}) =
             (↝l (red-th (abs ({!   !} · (var (suc zero) · var zero))) (clλ u)) (clλ v)) 
             {!  !})
 
+-- Specific test
+A : Type
+A = X 0
+
+B : Type
+B = X 1
+
+Γ : Ctx
+Γ = Ø , A , B
+
+c : Γ ⊢ A
+c = K · var (suc zero) · var zero
+
+cred : c ↠₁ var (suc zero)
+cred = ↠₁K
+
+lc : Γ † A
+lc = clλ c
+
+testk : lc ↝ clλ (var (suc zero))
+testk = trans-↝ (↝l (red-th (abs var (suc zero)) (var (suc zero))) (var zero)) (red-th (var (suc (suc zero))) (var zero))
+
+-- Now, generic test
+cg : ∀ {Γ A B} {u : Γ ⊢ A} {v : Γ ⊢ B} → Γ ⊢ A
+cg {u = u} {v} = K · u · v
+
+lcg : ∀ {Γ A B} {u : Γ ⊢ A} {v : Γ ⊢ B} → Γ † A
+lcg {u = u} {v} = clλ (cg {u = u} {v})
+
+cgred : ∀ {Γ A B} {u : Γ ⊢ A} {v : Γ ⊢ B} → cg {u = u} {v} ↠₁ u
+cgred = ↠₁K
+
+testg : ∀ {Γ A B} {u : Γ ⊢ A} {v : Γ ⊢ B} → lcg {u = u} {v} ↝ clλ u
+testg {u = u} {v} = trans-↝ (↝l (red-th (abs var (suc zero)) (clλ u)) (clλ v)) ({! red-th ? ?  !})
+
 -- Lemma 9.5.a
 clλ-↠ : ∀ {Γ A} {u v : Γ ⊢ A} → u ↠ v → clλ u ↝ clλ v
 clλ-↠ ε = ε
@@ -60,4 +95,3 @@ clλ-~ (bwd x) = bwd (clλ-↠ x)
 
 -- Lemma 9.5.c : clλ preserves extensional equality
 -- todo
- 

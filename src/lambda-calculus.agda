@@ -1,3 +1,5 @@
+{-# OPTIONS --allow-unsolved-metas #-}
+
 module lambda-calculus where
 
 open import types
@@ -30,6 +32,19 @@ var x [ σ ]   = σ x
 _[_/0] : ∀ {Γ A B} → Γ , B † A → Γ † B → Γ † A
 t [ u /0] = t [ (λ { zero → u ; (suc x) → var x}) ]
 
+wk-last-subst : ∀ {Γ A B} (t : Γ † A) (u : Γ † B) → wk-last t [ u /0] ≡ t
+wk-last-subst {Γ} {A} (var x) u = lem x u
+  where
+  lem : ∀ {Γ A B} (x : Γ ∋ A) (u : Γ † B) → (wk-last (var x) [ u /0]) ≡ var x
+  lem zero u = refl
+  lem (suc x) u = cong var (cong suc (lem' x))
+    where
+    lem' : ∀ {Γ A} (x : Γ ∋ A) → wk-var ⊆-refl x ≡ x
+    lem' zero = refl
+    lem' (suc x) = cong suc (lem' x)
+wk-last-subst (t · t') u = {!!}
+wk-last-subst (abs t) u = {!!}
+
 data _↝₁_ : ∀ {Γ A} → Γ † A → Γ † A → Set where
     ↝₁l : ∀ {Γ A B} {t t' : Γ † (A ⇒ B)} → t ↝₁ t' → (u : Γ † A) → (t · u) ↝₁ (t' · u)
     ↝₁r : ∀ {Γ A B} (t : Γ † (A ⇒ B)) → {u u' : Γ † A} → u ↝₁ u' → (t · u) ↝₁ (t · u')
@@ -54,6 +69,9 @@ infix 10 _↝_
 trans-↝ : ∀ {Γ A} {m n p : Γ † A} → m ↝ n → n ↝ p → m ↝ p
 trans-↝ ε mp = mp
 trans-↝ (x ◅ s) np = x ◅ trans-↝ s np
+
+≡↝ : ∀ {Γ A} {t u : Γ † A} → t ≡ u → t ↝ u
+≡↝ refl = ε
 
 -- Reduction theorem (in fact the reduction is done in only one step)
 red-th : ∀ {Γ A B} (m : Γ , A † B) → (n : Γ † A) → (abs m) · n ↝ m [ n /0]

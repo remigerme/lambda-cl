@@ -3,9 +3,12 @@ module common where
 open import types
 open import combinatory-logic renaming (abs to abs-cl; wk-last to wk-last-cl; red-th to red-th-cl; _[_] to _[_]cl) 
 open import lambda-calculus
+open import lambda-calculus as L
 
 open import Relation.Binary.Construct.Closure.ReflexiveTransitive using (Star; ε; _◅_; _▻_)
 open import Relation.Binary.Construct.Closure.Symmetric using (SymClosure; fwd; bwd)
+
+open import Relation.Binary.PropositionalEquality
 
 -- From λ to CL
 λcl : ∀ {Γ A} → Γ † A → Γ ⊢ A
@@ -30,10 +33,13 @@ clλ-↠₁ : ∀ {Γ A} {u v : Γ ⊢ A} → u ↠₁ v → clλ u ↝ clλ v
 clλ-↠₁ (↠₁l e u) = ↝l (clλ-↠₁ e) (clλ u)
 clλ-↠₁ (↠₁r t e) = ↝r (clλ t) (clλ-↠₁ e)
 clλ-↠₁ {v = v} ↠₁I = red-th (var zero) (clλ v)
-clλ-↠₁ {v = v} (↠₁K {u = u}) = trans-↝ (↝l (red-th (abs (var (suc zero))) (clλ v)) (clλ u)) {! lem  !}
-    where
-    lem : ((abs var (suc zero)) lambda-calculus.[ clλ v /0]) · clλ u ↝ {! clλ v !}
-    lem = red-th (wk-last (clλ v)) (clλ u)
+clλ-↠₁ {u = K · p · q} ↠₁K =
+  trans-↝
+    (↝l (red-th (abs (var (suc zero))) (clλ p)) (clλ q))
+    (trans-↝
+      (red-th (wk-last (clλ p)) (clλ q))
+      (≡↝ (wk-last-subst (clλ p) (clλ q)))
+    )
 -- We now need to prove :
 -- ((abs var (suc zero)) lambda-calculus.[ clλ v /0]) · clλ u ↝ clλ v
 -- which I expected to prove by re-applying reduction theorem once again, but adga complains :'(
